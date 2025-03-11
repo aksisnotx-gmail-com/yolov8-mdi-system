@@ -16,5 +16,13 @@
         "detection_results": {
             "backpack": 1
         }
+    },
+    {
+        "timestamp": "2025-03-11 17:51:31",
+        "file_name": "garbage-2729608_1280.jpg",
+        "inference_time_ms": 549.83,
+        "detection_results": {
+            "backpack": 1
+        }
     }
 ]

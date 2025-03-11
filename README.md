@@ -13,25 +13,18 @@
 
 ## 系统要求
 
-- Python 3.8+
+- Python 3.9+
 - CUDA支持（推荐，用于GPU加速）
 
 ## 安装步骤
 
-1. 克隆仓库：
-
-```bash
-git clone https://github.com/yourusername/marine-debris-detection.git
-cd marine-debris-detection
-```
-
-2. 安装依赖：
+1. 安装依赖：
 
 ```bash
 pip install -r requirements.txt
 ```
 
-3. 运行应用：
+2. 运行应用：
 
 ```bash
 cd server
@@ -73,16 +66,12 @@ streamlit run app.py
 ## 目录结构
 
 ```
-marine-debris-detection/
+yolov8-mdi-system/
 ├── server/                # 主代码目录
 │   ├── app.py             # 应用入口
 │   ├── ui.py              # 前端界面
 │   ├── inference.py       # 推理逻辑
 │   └── utils.py           # 工具函数
-├── models/                # 模型目录
-├── uploads/               # 上传文件目录
-├── results/               # 结果输出目录
-├── logs/                  # 日志目录
 ├── datasets/              # 数据集目录
 ├── requirements.txt       # 依赖列表
 └── README.md              # 说明文档

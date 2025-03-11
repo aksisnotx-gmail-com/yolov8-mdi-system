@@ -176,3 +176,5 @@ cython_debug/
 /.idea/modules.xml
 /.idea/vcs.xml
 /.idea/yolov8-mdi-system.iml
+/.idea/deployment.xml
+/.idea/webServers.xml
