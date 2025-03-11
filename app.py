@@ -6,7 +6,7 @@ web平台
 if __name__ == '__main__':
 
     # 加载 YOLOv8 预训练模型（如果有专门的海洋垃圾模型，替换 "yolov8n.pt"）
-    model = YOLO("yolov8n.pt")
+    model = YOLO("server/models/yolov8n.pt")
 
     for name in model.names:
         print(model.names[name])

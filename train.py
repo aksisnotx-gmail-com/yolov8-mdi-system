@@ -53,6 +53,6 @@ def conversion_box(org_label_path:str):
 """
 
 if __name__ == '__main__':
-    model = YOLO("yolov8n.pt")
+    model = YOLO("server/models/yolov8n.pt")
     # 训练（epochs=50 代表训练 50 轮）
     model.train(data="./datasets/global.solution.v4i.yolov8/data.yaml", epochs=50,cache=False, imgsz=640,workers=0, batch=4, device="mps",fraction=0.5)

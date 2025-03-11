@@ -1,0 +1,20 @@
+[
+    {
+        "timestamp": "2025-03-11 17:12:41",
+        "file_name": "2025-1-10 13.36拍摄的照片.jpg",
+        "inference_time_ms": 526.76,
+        "detection_results": {
+            "person": 1,
+            "suitcase": 1,
+            "chair": 1
+        }
+    },
+    {
+        "timestamp": "2025-03-11 17:25:38",
+        "file_name": "garbage-2729608_1280.jpg",
+        "inference_time_ms": 563.26,
+        "detection_results": {
+            "backpack": 1
+        }
+    }
+]

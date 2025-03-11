@@ -1,0 +1,152 @@
+import base64
+import datetime
+import json
+import logging
+import os
+from typing import Dict
+
+import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
+
+# 设置日志
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler("mdi_system.log"),
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger("MDI-System")
+
+def setup_directories():
+    """创建必要的目录结构"""
+    dirs = ["uploads", "results", "logs", "datasets", "models"]
+    for dir_name in dirs:
+        os.makedirs(dir_name, exist_ok=True)
+    logger.info("目录结构已创建")
+
+def get_file_info(file) -> Dict:
+    """获取上传文件的信息"""
+    if file is None:
+        return {}
+    
+    file_details = {
+        "文件名": file.name,
+        "文件类型": file.type,
+        "文件大小(MB)": round(file.size / (1024 * 1024), 2)
+    }
+    return file_details
+
+def save_uploaded_file(uploaded_file, save_dir="uploads") -> str:
+    """保存上传的文件并返回保存路径"""
+    os.makedirs(save_dir, exist_ok=True)
+    file_path = os.path.join(save_dir, uploaded_file.name)
+    
+    with open(file_path, "wb") as f:
+        f.write(uploaded_file.getbuffer())
+    
+    logger.info(f"文件已保存至: {file_path}")
+    return file_path
+
+def is_video_file(file_path: str) -> bool:
+    """判断文件是否为视频"""
+    video_extensions = ['.mp4', '.avi', '.mov', '.mkv', '.flv', '.wmv']
+    _, ext = os.path.splitext(file_path.lower())
+    return ext in video_extensions
+
+def is_image_file(file_path: str) -> bool:
+    """判断文件是否为图片"""
+    image_extensions = ['.jpg', '.jpeg', '.png', '.bmp', '.gif', '.tiff']
+    _, ext = os.path.splitext(file_path.lower())
+    return ext in image_extensions
+
+def create_detection_log(file_name: str, detection_results: Dict, inference_time: float) -> Dict:
+    """创建检测日志"""
+    timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    log_entry = {
+        "timestamp": timestamp,
+        "file_name": file_name,
+        "inference_time_ms": round(inference_time * 1000, 2),
+        "detection_results": detection_results
+    }
+    
+    # 将日志保存到文件
+    log_file = os.path.join("logs", "detection_logs.json")
+    os.makedirs("logs", exist_ok=True)
+    
+    try:
+        if os.path.exists(log_file):
+            with open(log_file, 'r', encoding='utf-8') as f:
+                logs = json.load(f)
+        else:
+            logs = []
+        
+        logs.append(log_entry)
+        
+        with open(log_file, 'w', encoding='utf-8') as f:
+            json.dump(logs, f, ensure_ascii=False, indent=4)
+    except Exception as e:
+        logger.error(f"保存日志时出错: {str(e)}")
+    
+    return log_entry
+
+def generate_detection_statistics(detection_results: Dict) -> pd.DataFrame:
+    """生成检测统计数据"""
+    if not detection_results:
+        return pd.DataFrame()
+    
+    data = []
+    for class_name, count in detection_results.items():
+        data.append({"类别": class_name, "数量": count})
+    
+    return pd.DataFrame(data)
+
+def export_to_csv(data: pd.DataFrame, filename: str = "detection_report.csv") -> str:
+    """导出数据为CSV文件"""
+    filepath = os.path.join("results", filename)
+    os.makedirs("results", exist_ok=True)
+    data.to_csv(filepath, index=False, encoding='utf-8-sig')
+    return filepath
+
+def export_to_json(data: Dict, filename: str = "detection_report.json") -> str:
+    """导出数据为JSON文件"""
+    filepath = os.path.join("results", filename)
+    os.makedirs("results", exist_ok=True)
+    with open(filepath, 'w', encoding='utf-8') as f:
+        json.dump(data, f, ensure_ascii=False, indent=4)
+    return filepath
+
+def create_bar_chart(df: pd.DataFrame, x_col: str, y_col: str, title: str) -> go.Figure:
+    """创建条形图"""
+    fig = px.bar(df, x=x_col, y=y_col, title=title)
+    fig.update_layout(
+        xaxis_title=x_col,
+        yaxis_title=y_col,
+        template="plotly_white"
+    )
+    return fig
+
+def create_pie_chart(df: pd.DataFrame, names_col: str, values_col: str, title: str) -> go.Figure:
+    """创建饼图"""
+    fig = px.pie(df, names=names_col, values=values_col, title=title)
+    fig.update_layout(template="plotly_white")
+    return fig
+
+def get_file_download_link(file_path: str, link_text: str) -> str:
+    """生成文件下载链接"""
+    with open(file_path, 'rb') as f:
+        data = f.read()
+    b64 = base64.b64encode(data).decode()
+    extension = os.path.splitext(file_path)[1]
+    
+    if extension == '.csv':
+        mime_type = 'text/csv'
+    elif extension == '.json':
+        mime_type = 'application/json'
+    else:
+        mime_type = 'application/octet-stream'
+    
+    href = f'<a href="data:{mime_type};base64,{b64}" download="{os.path.basename(file_path)}">{link_text}</a>'
+    return href 
