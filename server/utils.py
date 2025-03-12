@@ -9,20 +9,27 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
-# 设置日志
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler("server/sys-logs/mdi_system.log"),
-        logging.StreamHandler()
-    ]
-)
+from cfg import UPLOADS_FOLDER_PATH, RESULTS_FOLDER_PATH, LOGS_FOLDER_PATH, DATASETS_FOLDER_PATH, \
+    MODELS_FOLDER_PATH
+
+
+# # 设置日志
+# logging.basicConfig(
+#     level=logging.INFO,
+#     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+#     handlers=[
+#         logging.FileHandler(SYS_LOG_PATH),
+#         logging.StreamHandler()
+#     ]
+# )
+# logger = logging.getLogger("MDI-System")
+
 logger = logging.getLogger("MDI-System")
 
 def setup_directories():
     """创建必要的目录结构"""
-    dirs = ["uploads", "results", "logs", "datasets", "models"]
+    # dirs = ["uploads", "results", "logs", "datasets", "models"]
+    dirs = [UPLOADS_FOLDER_PATH, RESULTS_FOLDER_PATH, LOGS_FOLDER_PATH, DATASETS_FOLDER_PATH, MODELS_FOLDER_PATH]
     for dir_name in dirs:
         os.makedirs(dir_name, exist_ok=True)
     logger.info("目录结构已创建")
@@ -39,7 +46,7 @@ def get_file_info(file) -> Dict:
     }
     return file_details
 
-def save_uploaded_file(uploaded_file, save_dir="uploads") -> str:
+def save_uploaded_file(uploaded_file, save_dir=UPLOADS_FOLDER_PATH) -> str:
     """保存上传的文件并返回保存路径"""
     os.makedirs(save_dir, exist_ok=True)
     file_path = os.path.join(save_dir, uploaded_file.name)
@@ -73,8 +80,8 @@ def create_detection_log(file_name: str, detection_results: Dict, inference_time
     }
     
     # 将日志保存到文件
-    log_file = os.path.join("logs", "detection_logs.json")
-    os.makedirs("logs", exist_ok=True)
+    log_file = os.path.join(LOGS_FOLDER_PATH, "detection_logs.json")
+    # os.makedirs("logs", exist_ok=True)
     
     try:
         if os.path.exists(log_file):
@@ -105,15 +112,15 @@ def generate_detection_statistics(detection_results: Dict) -> pd.DataFrame:
 
 def export_to_csv(data: pd.DataFrame, filename: str = "detection_report.csv") -> str:
     """导出数据为CSV文件"""
-    filepath = os.path.join("results", filename)
-    os.makedirs("results", exist_ok=True)
+    filepath = os.path.join(RESULTS_FOLDER_PATH, filename)
+    # os.makedirs("results", exist_ok=True)
     data.to_csv(filepath, index=False, encoding='utf-8-sig')
     return filepath
 
 def export_to_json(data: Dict, filename: str = "detection_report.json") -> str:
     """导出数据为JSON文件"""
-    filepath = os.path.join("results", filename)
-    os.makedirs("results", exist_ok=True)
+    filepath = os.path.join(RESULTS_FOLDER_PATH, filename)
+    # os.makedirs("results", exist_ok=True)
     with open(filepath, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
     return filepath

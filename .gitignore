@@ -178,3 +178,7 @@ cython_debug/
 /.idea/yolov8-mdi-system.iml
 /.idea/deployment.xml
 /.idea/webServers.xml
+/server/logs/
+/server/results/
+/server/sys-logs/
+/server/uploads/

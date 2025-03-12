@@ -258,9 +258,11 @@ def upload_detection_tab():
             
             elif st.session_state.detection_results["type"] == "video" and st.session_state.processed_video is not None:
                 # 显示处理后的视频
-                video_file = open(st.session_state.processed_video, 'rb')
+                video_file = open("/Applications/jetbrains/PyCharm/jiedan/yolov8-mdi-system/" + st.session_state.processed_video, 'rb')
+
                 video_bytes = video_file.read()
                 st.video(video_bytes)
+
             
             # 显示检测统计
             if st.session_state.class_counts:

@@ -1,16 +1,18 @@
+import logging
 import os
+import time
+from typing import Dict, Tuple
+
 import cv2
 import numpy as np
-import time
-from typing import Dict, List, Tuple, Union, Optional
-import torch
 from ultralytics import YOLO
-import logging
+
+from cfg import DEFAULT_MODEL_FILE_PATH, MODELS_FOLDER_PATH, RESULTS_FOLDER_PATH
 
 logger = logging.getLogger("MDI-System")
 
 class MarineDebrisDetector:
-    def __init__(self, model_path: str = "models/yolov8n.pt"):
+    def __init__(self, model_path: str = DEFAULT_MODEL_FILE_PATH):
         """
         初始化海洋垃圾检测器
         
@@ -134,8 +136,8 @@ class MarineDebrisDetector:
         # 如果未指定输出路径，则自动生成
         if output_path is None:
             filename, ext = os.path.splitext(os.path.basename(video_path))
-            output_path = os.path.join("results", f"{filename}_detected{ext}")
-        
+            output_path = os.path.join(RESULTS_FOLDER_PATH, f"{filename}_detected{ext}")
+
         # 确保输出目录存在
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         
@@ -361,7 +363,7 @@ class MarineDebrisDetector:
         return class_counts
     
     def train_model(self, dataset_path: str, epochs: int = 50, batch_size: int = 16, 
-                   img_size: int = 640, output_dir: str = "models") -> Dict:
+                   img_size: int = 640, output_dir: str = MODELS_FOLDER_PATH) -> Dict:
         """
         使用自定义数据集训练模型
         
@@ -385,7 +387,7 @@ class MarineDebrisDetector:
         
         try:
             # 创建一个新的YOLO模型实例用于训练
-            model = YOLO("yolov8n.pt")
+            model = YOLO(DEFAULT_MODEL_FILE_PATH)
             
             # 训练模型
             results = model.train(
@@ -407,7 +409,7 @@ class MarineDebrisDetector:
             }
             
             # 更新当前模型
-            self.model_path = os.path.join(output_dir, "marine_debris_detector", "weights", "best.pt")
+            self.model_path = os.path.join(output_dir, "runs", "weights", "best.pt")
             self.load_model()
             
             logger.info(f"模型训练完成，最佳模型保存至: {self.model_path}")
