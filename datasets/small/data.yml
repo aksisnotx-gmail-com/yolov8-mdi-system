@@ -1,0 +1,8 @@
+#训练集路径
+train: /Applications/jetbrains/PyCharm/jiedan/yolov8-mdi-system/datasets/small/images/train
+#验证集路径，验证集数据可以来自训练集中的一部分
+val: /Applications/jetbrains/PyCharm/jiedan/yolov8-mdi-system/datasets/small/images/val
+# 训练类别对应下面的 names
+nc: 1
+names:
+  - plastic bag
