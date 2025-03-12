@@ -72,7 +72,6 @@ yolov8-mdi-system/
 │   ├── ui.py              # 前端界面
 │   ├── inference.py       # 推理逻辑
 │   └── utils.py           # 工具函数
-├── datasets/              # 数据集目录
 ├── requirements.txt       # 依赖列表
 └── README.md              # 说明文档
 ```

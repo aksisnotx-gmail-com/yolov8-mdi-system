@@ -153,7 +153,7 @@ class MarineDebrisDetector:
         total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
         
         # 创建视频写入器
-        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+        fourcc = cv2.VideoWriter_fourcc(*'X264')
         out = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
         
         # 统计各类别数量

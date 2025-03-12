@@ -255,15 +255,12 @@ def upload_detection_tab():
                     caption="检测结果图像",
                     use_column_width=True
                 )
-            
+
             elif st.session_state.detection_results["type"] == "video" and st.session_state.processed_video is not None:
-                # 显示处理后的视频
-                video_file = open("/Applications/jetbrains/PyCharm/jiedan/yolov8-mdi-system/" + st.session_state.processed_video, 'rb')
-
-                video_bytes = video_file.read()
-                st.video(video_bytes)
-
-            
+                # 显示处理后的视频 streamlit无法展示OpenCV 重新组装的视频原因在于视频格式解码器
+                # video_file = open(st.session_state.processed_video, 'rb')
+                # video_bytes = video_file.read()
+                st.video(st.session_state.processed_video)
             # 显示检测统计
             if st.session_state.class_counts:
                 st.markdown('<h3 class="sub-header">检测统计</h3>', unsafe_allow_html=True)
