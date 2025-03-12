@@ -22,4 +22,4 @@ docker run -d --name $CONTAINER_NAME \
     -w /app \
     $IMAGE_NAME \
     tail -f /dev/null
-echo ">>> 部署完成！访问 http://localhost:$HOST_PORT 进行测试"
+echo "容器启动成功"

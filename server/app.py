@@ -14,7 +14,7 @@ if __name__ == "__main__":
         level=logging.INFO,
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
         handlers=[
-            logging.FileHandler("mdi_system.log"),
+            logging.FileHandler("server/sys-logs/mdi_system.log"),
             logging.StreamHandler()
         ]
     )
