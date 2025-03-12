@@ -258,17 +258,12 @@ class MarineDebrisDetector:
         cap = cv2.VideoCapture(camera_id)
         if not cap.isOpened():
             raise ValueError(f"无法打开摄像头 ID: {camera_id}")
-        
         logger.info(f"已打开摄像头 ID: {camera_id}")
-        
-        # 获取视频属性
-        width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-        height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        
+
         # 创建窗口
-        window_name = "实时检测"
-        cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
-        
+        # window_name = "实时检测"
+        # cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
+
         # 统计各类别数量
         class_counts = {}
         
@@ -280,6 +275,7 @@ class MarineDebrisDetector:
         while cap.isOpened():
             ret, frame = cap.read()
             if not ret:
+                logger.info("无法读取摄像头画面")
                 break
             
             # 执行推理
@@ -346,10 +342,13 @@ class MarineDebrisDetector:
             for cls_name, count in current_frame_counts.items():
                 cv2.putText(annotated_frame, f"{cls_name}: {count}", (20, y_offset), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
                 y_offset += 25
-            
-            # 显示图像
-            cv2.imshow(window_name, annotated_frame)
-            
+
+            try:
+                # 显示图像
+                cv2.imshow('detected window', annotated_frame)
+            except cv2.error as e:
+                logger.info(f"OpenCV 异常: {e}")
+
             # 按ESC键退出
             if cv2.waitKey(1) == 27:
                 break
