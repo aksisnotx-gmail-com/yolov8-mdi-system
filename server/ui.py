@@ -357,8 +357,7 @@ def detection_logs_tab():
     
     # 尝试加载日志文件
     log_file = os.path.join("logs", "detection_logs.json")
-    logs = []
-    
+
     if os.path.exists(log_file):
         try:
             with open(log_file, 'r', encoding='utf-8') as f:

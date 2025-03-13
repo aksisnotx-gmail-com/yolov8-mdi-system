@@ -31,8 +31,10 @@ def setup_directories():
     # dirs = ["uploads", "results", "logs", "datasets", "models"]
     dirs = [UPLOADS_FOLDER_PATH, RESULTS_FOLDER_PATH, LOGS_FOLDER_PATH, DATASETS_FOLDER_PATH, MODELS_FOLDER_PATH]
     for dir_name in dirs:
-        os.makedirs(dir_name, exist_ok=True)
-    logger.info("目录结构已创建")
+        if not os.path.exists(dir_name):
+            os.makedirs(dir_name, exist_ok=True)
+            logger.info(f'创建{dir_name}目录成功')
+    logger.info("<----初始化目录---->")
 
 def get_file_info(file) -> Dict:
     """获取上传文件的信息"""
