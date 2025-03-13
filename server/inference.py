@@ -6,6 +6,7 @@ from typing import Dict, Tuple
 import cv2
 import numpy as np
 from ultralytics import YOLO
+import streamlit as st
 
 from cfg import DEFAULT_MODEL_FILE_PATH, MODELS_FOLDER_PATH, RESULTS_FOLDER_PATH
 
@@ -245,123 +246,136 @@ class MarineDebrisDetector:
         
         return output_path, class_counts, avg_inference_time
     
-    def detect_webcam(self, camera_id: int = 0, conf_threshold: float = 0.25, iou_threshold: float = 0.45) -> None:
+    def detect_webcam(self, camera_id: int = 0, conf_threshold: float = 0.25, iou_threshold: float = 0.45) -> Dict:
         """
-        使用摄像头进行实时目标检测（此函数通常由UI调用，不直接返回结果）
+        使用摄像头进行实时目标检测，使用Streamlit显示画面
         
         Args:
             camera_id: 摄像头ID
             conf_threshold: 置信度阈值
             iou_threshold: NMS IOU阈值
+            
+        Returns:
+            检测到的类别计数字典
         """
         # 打开摄像头
         cap = cv2.VideoCapture(camera_id)
         if not cap.isOpened():
             raise ValueError(f"无法打开摄像头 ID: {camera_id}")
+        
         logger.info(f"已打开摄像头 ID: {camera_id}")
-
-        # 创建窗口
-        # window_name = "实时检测"
-        # cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
-
+        
         # 统计各类别数量
         class_counts = {}
-
-        st_frame = st.empty()
-
+        
+        # 创建Streamlit占位符用于显示视频帧
+        frame_placeholder = st.empty()
+        
+        # 创建Streamlit占位符用于显示当前帧的检测结果
+        info_placeholder = st.empty()
+        
+        # 创建停止按钮
+        stop_button_placeholder = st.empty()
+        stop_button = stop_button_placeholder.button("停止检测")
+        
         # 记录FPS相关变量
         frame_count = 0
         start_time = time.time()
         fps = 0
-
-        while cap.isOpened():
-            ret, frame = cap.read()
-            if not ret:
-                logger.info("无法读取摄像头画面")
-                break
-            
-            # 执行推理
-            results = self.model(frame, conf=conf_threshold, iou=iou_threshold)
-            
-            # 获取检测结果
-            result = results[0]
-            
-            # 在图像上绘制检测框
-            annotated_frame = frame.copy()
-            
-            # 清空当前帧的类别计数
-            current_frame_counts = {}
-            
-            if hasattr(result, 'boxes') and len(result.boxes) > 0:
-                for box in result.boxes:
-                    # 获取类别ID和置信度
-                    cls_id = int(box.cls.item())
-                    conf = box.conf.item()
-                    
-                    # 获取类别名称
-                    cls_name = self.class_names.get(cls_id, f"类别_{cls_id}")
-                    
-                    # 更新类别计数
-                    if cls_name in current_frame_counts:
-                        current_frame_counts[cls_name] += 1
-                    else:
-                        current_frame_counts[cls_name] = 1
-                    
-                    # 更新总类别计数
-                    if cls_name in class_counts:
-                        class_counts[cls_name] += 1
-                    else:
-                        class_counts[cls_name] = 1
-                    
-                    # 获取边界框坐标
-                    x1, y1, x2, y2 = map(int, box.xyxy[0].tolist())
-                    
-                    # 绘制边界框
-                    cv2.rectangle(annotated_frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
-                    
-                    # 绘制类别标签和置信度
-                    label = f"{cls_name}: {conf:.2f}"
-                    (label_width, label_height), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
-                    cv2.rectangle(annotated_frame, (x1, y1 - label_height - 10), (x1 + label_width, y1), (0, 255, 0), -1)
-                    cv2.putText(annotated_frame, label, (x1, y1 - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1)
-            
-            # 计算并显示FPS
-            frame_count += 1
-            elapsed_time = time.time() - start_time
-            if elapsed_time >= 1.0:
-                fps = frame_count / elapsed_time
-                frame_count = 0
-                start_time = time.time()
-            
-            # 在图像上显示FPS
-            cv2.putText(annotated_frame, f"FPS: {fps:.1f}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
-            
-            # 显示当前帧检测到的目标数量
-            y_offset = 70
-            cv2.putText(annotated_frame, "检测结果:", (10, y_offset), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
-            y_offset += 30
-            
-            for cls_name, count in current_frame_counts.items():
-                cv2.putText(annotated_frame, f"{cls_name}: {count}", (20, y_offset), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
-                y_offset += 25
-
-            try:
-                st_frame.image(annotated_frame, channels="RGB", use_column_width=True)
-
-                # 显示图像
-                # cv2.imshow('detected window', annotated_frame)
-            except cv2.error as e:
-                logger.info(f"OpenCV 异常: {e}")
-
-            # 按ESC键退出
-            if cv2.waitKey(1) == 27:
-                break
         
-        # 释放资源
-        cap.release()
-        cv2.destroyAllWindows()
+        # 当前帧的类别计数
+        current_frame_counts = {}
         
-        logger.info(f"摄像头检测结束，共检测到 {sum(class_counts.values())} 个目标")
+        try:
+            while cap.isOpened() and not stop_button:
+                ret, frame = cap.read()
+                if not ret:
+                    logger.info("无法读取摄像头画面")
+                    break
+                
+                # 执行推理
+                results = self.model(frame, conf=conf_threshold, iou=iou_threshold)
+                
+                # 获取检测结果
+                result = results[0]
+                
+                # 在图像上绘制检测框
+                annotated_frame = frame.copy()
+                
+                # 清空当前帧的类别计数
+                current_frame_counts = {}
+                
+                if hasattr(result, 'boxes') and len(result.boxes) > 0:
+                    for box in result.boxes:
+                        # 获取类别ID和置信度
+                        cls_id = int(box.cls.item())
+                        conf = box.conf.item()
+                        
+                        # 获取类别名称
+                        cls_name = self.class_names.get(cls_id, f"类别_{cls_id}")
+                        
+                        # 更新类别计数
+                        if cls_name in current_frame_counts:
+                            current_frame_counts[cls_name] += 1
+                        else:
+                            current_frame_counts[cls_name] = 1
+                        
+                        # 更新总类别计数
+                        if cls_name in class_counts:
+                            class_counts[cls_name] += 1
+                        else:
+                            class_counts[cls_name] = 1
+                        
+                        # 获取边界框坐标
+                        x1, y1, x2, y2 = map(int, box.xyxy[0].tolist())
+                        
+                        # 绘制边界框
+                        cv2.rectangle(annotated_frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+                        
+                        # 绘制类别标签和置信度
+                        label = f"{cls_name}: {conf:.2f}"
+                        (label_width, label_height), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
+                        cv2.rectangle(annotated_frame, (x1, y1 - label_height - 10), (x1 + label_width, y1), (0, 255, 0), -1)
+                        cv2.putText(annotated_frame, label, (x1, y1 - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1)
+                
+                # 计算并显示FPS
+                frame_count += 1
+                elapsed_time = time.time() - start_time
+                if elapsed_time >= 1.0:
+                    fps = frame_count / elapsed_time
+                    frame_count = 0
+                    start_time = time.time()
+                
+                # 在图像上显示FPS
+                cv2.putText(annotated_frame, f"FPS: {fps:.1f}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+                
+                # 将BGR转换为RGB用于Streamlit显示
+                annotated_frame_rgb = cv2.cvtColor(annotated_frame, cv2.COLOR_BGR2RGB)
+                
+                # 使用Streamlit显示帧
+                frame_placeholder.image(annotated_frame_rgb, caption="实时检测", use_column_width=True)
+                
+                # 显示当前帧的检测结果
+                if current_frame_counts:
+                    info_text = "### 当前检测结果\n"
+                    for cls_name, count in current_frame_counts.items():
+                        info_text += f"- {cls_name}: {count}\n"
+                    info_placeholder.markdown(info_text)
+                else:
+                    info_placeholder.markdown("### 当前检测结果\n未检测到目标")
+                
+                # 检查是否点击了停止按钮
+                stop_button = stop_button_placeholder.button("停止检测", key=f"stop_{time.time()}")
+                
+                # 添加短暂延迟，避免过高的CPU使用率
+                time.sleep(0.01)
+        
+        except Exception as e:
+            logger.error(f"摄像头检测过程中出错: {str(e)}")
+        finally:
+            # 释放资源
+            cap.release()
+            logger.info(f"摄像头检测结束，共检测到 {sum(class_counts.values())} 个目标")
         
         return class_counts
     

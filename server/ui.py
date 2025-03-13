@@ -314,40 +314,39 @@ def realtime_detection_tab():
     iou_threshold = st.slider("NMS IOU阈值", min_value=0.1, max_value=1.0, value=0.45, step=0.05, key="rt_iou")
     
     # 实时检测按钮
-    st.markdown('<div class="warning-box">注意：点击"开始实时检测"后，将会打开一个新窗口进行实时检测。按ESC键退出检测。</div>', unsafe_allow_html=True)
+    st.markdown('<div class="warning-box">点击"开始实时检测"后，将在下方显示实时检测画面。点击"停止检测"按钮可停止检测。</div>', unsafe_allow_html=True)
     
     if st.button("开始实时检测", key="start_webcam"):
         try:
-            with st.spinner("正在启动摄像头，请稍候..."):
-                # 调用实时检测函数
-                class_counts = st.session_state.detector.detect_webcam(camera_id, conf_threshold, iou_threshold)
+            # 调用实时检测函数
+            class_counts = st.session_state.detector.detect_webcam(camera_id, conf_threshold, iou_threshold)
+            
+            # 保存结果到会话状态
+            st.session_state.class_counts = class_counts
+            
+            # 创建检测日志
+            log_entry = utils.create_detection_log(
+                f"webcam_{datetime.now().strftime('%Y%m%d_%H%M%S')}", 
+                class_counts, 
+                0
+            )
+            st.session_state.log_entries.append(log_entry)
+            
+            st.success(f"实时检测已完成！共检测到 {sum(class_counts.values())} 个目标")
+            
+            # 显示检测统计
+            if class_counts:
+                st.markdown('<h3 class="sub-header">检测统计</h3>', unsafe_allow_html=True)
                 
-                # 保存结果到会话状态
-                st.session_state.class_counts = class_counts
+                # 创建统计数据
+                df = utils.generate_detection_statistics(class_counts)
                 
-                # 创建检测日志
-                log_entry = utils.create_detection_log(
-                    f"webcam_{datetime.now().strftime('%Y%m%d_%H%M%S')}", 
-                    class_counts, 
-                    0
-                )
-                st.session_state.log_entries.append(log_entry)
+                # 显示统计表格
+                st.dataframe(df, use_container_width=True)
                 
-                st.success(f"实时检测已完成！共检测到 {sum(class_counts.values())} 个目标")
-                
-                # 显示检测统计
-                if class_counts:
-                    st.markdown('<h3 class="sub-header">检测统计</h3>', unsafe_allow_html=True)
-                    
-                    # 创建统计数据
-                    df = utils.generate_detection_statistics(class_counts)
-                    
-                    # 显示统计表格
-                    st.dataframe(df, use_container_width=True)
-                    
-                    # 创建条形图
-                    fig = utils.create_bar_chart(df, "类别", "数量", "垃圾类型分布")
-                    st.plotly_chart(fig, use_container_width=True)
+                # 创建条形图
+                fig = utils.create_bar_chart(df, "类别", "数量", "垃圾类型分布")
+                st.plotly_chart(fig, use_container_width=True)
         
         except Exception as e:
             st.error(f"实时检测过程中出错: {str(e)}")
