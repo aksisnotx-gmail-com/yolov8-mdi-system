@@ -5,9 +5,6 @@ from ultralytics import YOLO
 使用 opencv 弹出一个新的窗口用于展示摄像头捕捉到的画面并使用 yolov8推理并把结果推理到窗口中，我的电脑是 MacBook air m2系列，摄像头 id是 1 依赖我已经下载好了，不用重复下载
 所有的代码现在 detected_camera 函数中
 """
-
-
-
 def open_camera():
     cap = cv2.VideoCapture(1)  # 选择摄像头 ID（如果 ID=1 不行，尝试 ID=0）
 

@@ -7,7 +7,6 @@ Roboflow标注网站的开源数据集中收集数据的时候，发现获得的
 导致Yolov8运行的时候自动抛弃分割数据标注部分，导致数据集大量空缺，模型精度大幅下降（Polygon部分被抛弃）
 观察txt文件，发现分割的数据集是以坐标形式存在的，而box标注的数据集是以xywh形式存在的。
 """
-
 def conversion_box(org_label_path:str):
     import os
 

@@ -136,10 +136,39 @@ def create_bar_chart(df: pd.DataFrame, x_col: str, y_col: str, title: str) -> go
     return fig
 
 def create_pie_chart(df: pd.DataFrame, names_col: str, values_col: str, title: str) -> go.Figure:
-    """创建饼图"""
-    fig = px.pie(df, names=names_col, values=values_col, title=title)
-    fig.update_layout(template="plotly_white")
+    """创建饼图（修正版）"""
+    # 校验输入
+    if df.empty:
+        return go.Figure()
+    if names_col not in df.columns or values_col not in df.columns:
+        raise ValueError(f"列名错误: {names_col} 或 {values_col} 不存在")
+
+    df = df.copy()
+
+    # 强制转换数值类型并清理数据
+    df[values_col] = pd.to_numeric(df[values_col], errors="coerce")
+    df = df.dropna(subset=[values_col])
+
+    total = df[values_col].sum()
+    if total == 0:
+        return go.Figure()
+
+    # 生成饼图
+    go_pie = go.Pie(labels=list(df[names_col]), values=list(df[values_col]),
+                    hovertemplate="<b>%{label}</b><br>数量: %{value}<br>百分比: %{percent}%<extra></extra>",
+                    texttemplate="%{label}<br>%{percent}%",
+                    textposition="inside")
+    fig = go.Figure(data=[go_pie])
+
+    fig.update_layout(
+        title=title,
+        template="plotly_white",
+        legend_title="类别",
+        uniformtext_minsize=12,
+        uniformtext_mode="hide"
+    )
     return fig
+
 
 def get_file_download_link(file_path: str, link_text: str) -> str:
     """生成文件下载链接"""
