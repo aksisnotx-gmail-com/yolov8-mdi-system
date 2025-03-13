@@ -266,12 +266,14 @@ class MarineDebrisDetector:
 
         # 统计各类别数量
         class_counts = {}
-        
+
+        st_frame = st.empty()
+
         # 记录FPS相关变量
         frame_count = 0
         start_time = time.time()
         fps = 0
-        
+
         while cap.isOpened():
             ret, frame = cap.read()
             if not ret:
@@ -344,8 +346,10 @@ class MarineDebrisDetector:
                 y_offset += 25
 
             try:
+                st_frame.image(annotated_frame, channels="RGB", use_column_width=True)
+
                 # 显示图像
-                cv2.imshow('detected window', annotated_frame)
+                # cv2.imshow('detected window', annotated_frame)
             except cv2.error as e:
                 logger.info(f"OpenCV 异常: {e}")
 
