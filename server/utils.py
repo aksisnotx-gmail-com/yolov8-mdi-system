@@ -129,16 +129,27 @@ def export_to_json(data: Dict, filename: str = "detection_report.json") -> str:
 
 def create_bar_chart(df: pd.DataFrame, x_col: str, y_col: str, title: str) -> go.Figure:
     """创建条形图"""
-    fig = px.bar(df, x=x_col, y=y_col, title=title)
+    df_sorted = df.sort_values(by=y_col)
+
+    # 创建条形图
+    go_bar = go.Bar(
+        x=list(df_sorted[x_col]),
+        y=list(df_sorted[y_col])
+    )
+
+    # 创建 Figure 对象并设置布局
+    fig = go.Figure(data=go_bar)
     fig.update_layout(
         xaxis_title=x_col,
         yaxis_title=y_col,
+        title=title,
         template="plotly_white"
     )
+
     return fig
 
 def create_pie_chart(df: pd.DataFrame, names_col: str, values_col: str, title: str) -> go.Figure:
-    """创建饼图（修正版）"""
+    """创建饼图"""
     # 校验输入
     if df.empty:
         return go.Figure()
