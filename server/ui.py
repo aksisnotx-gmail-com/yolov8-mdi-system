@@ -1,6 +1,6 @@
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import cv2
 import pandas as pd
@@ -125,8 +125,8 @@ def display_header():
 def display_sidebar():
     """显示侧边栏"""
     with st.sidebar:
-        # st.image("https://raw.githubusercontent.com/ultralytics/assets/main/yolov8/banner-yolov8.png", use_column_width=True)
-        # st.markdown("## ")
+        st.image("https://raw.githubusercontent.com/ultralytics/assets/main/yolov8/banner-yolov8.png", use_column_width=True)
+        st.markdown("## ")
         
         # 导航选项
         tabs = {
@@ -212,25 +212,25 @@ def upload_detection_tab():
                             
                             elif utils.is_video_file(file_path):
                                 # 视频检测
-                                output_path, class_counts, avg_inference_time = st.session_state.detector.detect_video(
+                                output_path, class_counts, avg_inference_time,total_inference_time = st.session_state.detector.detect_video(
                                     file_path, None, conf_threshold, iou_threshold
                                 )
                                 
                                 # 保存结果到会话状态
                                 st.session_state.processed_video = output_path
                                 st.session_state.class_counts = class_counts
-                                st.session_state.inference_time = avg_inference_time
+                                st.session_state.inference_time = total_inference_time
                                 st.session_state.detection_results = {
                                     "type": "video",
                                     "file_path": file_path,
                                     "output_path": output_path,
                                     "class_counts": class_counts,
-                                    "inference_time": avg_inference_time
+                                    "inference_time": total_inference_time
                                 }
                                 
                                 # 创建检测日志
                                 log_entry = utils.create_detection_log(
-                                    os.path.basename(file_path), class_counts, avg_inference_time
+                                    os.path.basename(file_path), class_counts, total_inference_time
                                 )
                                 st.session_state.log_entries.append(log_entry)
                                 
@@ -270,11 +270,11 @@ def upload_detection_tab():
                 
                 # 显示统计表格
                 st.dataframe(df, use_container_width=True)
-                
+
                 # 创建条形图
                 fig = utils.create_bar_chart(df, "类别", "数量", "垃圾类型分布")
                 st.plotly_chart(fig, use_container_width=True)
-                
+
                 # 创建饼图
                 fig2 = utils.create_pie_chart(df, "类别", "数量", "垃圾类型占比")
                 st.plotly_chart(fig2, use_container_width=True)
@@ -377,33 +377,39 @@ def detection_logs_tab():
             log_data.append({
                 "时间戳": log["timestamp"],
                 "文件名": log["file_name"],
-                "推理时间(ms)": log["inference_time_ms"],
+                "推理时间(s)": log["inference_time_ms"],
                 "检测目标数": total_objects
             })
         
-        log_df = pd.DataFrame(log_data)
-        
+        log_df = pd.DataFrame(log_data).sort_values(by="时间戳", ascending=False)
+
         # 显示日志表格
         st.markdown("### 检测日志")
         st.dataframe(log_df, use_container_width=True)
         
         # 创建时间序列图
         st.markdown("### 检测趋势")
-        
-        # 转换时间戳为日期时间
-        log_df["时间戳"] = pd.to_datetime(log_df["时间戳"])
-        
-        # 按时间排序
-        log_df = log_df.sort_values("时间戳")
-        
+
+        # 创建并显示图表
+        fig = go.Figure(go.Scatter(x=[i["时间戳"] for i in log_data],
+                                   y=[i["检测目标数"] for i in log_data],
+                                   mode='lines+markers',
+                                   hovertemplate='时间：%{x|%Y-%m-%d %H:%M:%S}<br>目标数：%{y}'))
+        fig.update_layout(title='检测目标数量趋势', xaxis_title='时间戳', yaxis_title='检测目标数')
+
         # 创建时间序列图
-        fig = px.line(log_df, x="时间戳", y="检测目标数", title="检测目标数量趋势")
         st.plotly_chart(fig, use_container_width=True)
-        
+
+
         # 创建推理时间图
-        fig2 = px.line(log_df, x="时间戳", y="推理时间(ms)", title="推理时间趋势")
+        fig2 = go.Figure(go.Scatter(x=[i["时间戳"] for i in log_data],
+                                   y=[i["推理时间(s)"] for i in log_data],
+                                   mode='lines+markers',
+                                   hovertemplate='时间：%{x|%Y-%m-%d %H:%M:%S}<br>推理时间(s)：%{y}'))
+        fig2.update_layout(title='推理时间趋势', xaxis_title='时间戳', yaxis_title='推理时间(s)')
         st.plotly_chart(fig2, use_container_width=True)
-        
+
+
         # 统计所有检测的类别分布
         all_class_counts = {}
         for log in st.session_state.log_entries:

@@ -117,7 +117,7 @@ class MarineDebrisDetector:
         return annotated_img, class_counts, inference_time
     
     def detect_video(self, video_path: str, output_path: str = None, conf_threshold: float = 0.25, 
-                    iou_threshold: float = 0.45, skip_frames: int = 0) -> Tuple[str, Dict, float]:
+                    iou_threshold: float = 0.45, skip_frames: int = 0) -> Tuple[str, Dict, float, float]:
         """
         对视频进行目标检测
         
@@ -243,8 +243,7 @@ class MarineDebrisDetector:
         avg_inference_time = total_inference_time / processed_frames if processed_frames > 0 else 0
         
         logger.info(f"视频处理完成，共处理 {processed_frames} 帧，检测到 {sum(class_counts.values())} 个目标，平均推理时间 {avg_inference_time:.3f} 秒/帧")
-        
-        return output_path, class_counts, avg_inference_time
+        return output_path, class_counts, avg_inference_time, total_inference_time
     
     def detect_webcam(self, camera_id: int = 0, conf_threshold: float = 0.25, iou_threshold: float = 0.45) -> Dict:
         """

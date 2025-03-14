@@ -1,3 +1,6 @@
+import time
+from time import sleep
+
 import cv2
 from ultralytics import YOLO
 
@@ -74,5 +77,8 @@ def detected_camera():
 
 
 if __name__ == "__main__":
-    detected_camera()
-
+    # detected_camera()
+    start_tome = time.time()
+    sleep(1)
+    end_time = start_tome - time.time()
+    print(f'----->{end_time}')

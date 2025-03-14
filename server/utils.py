@@ -74,10 +74,11 @@ def is_image_file(file_path: str) -> bool:
 def create_detection_log(file_name: str, detection_results: Dict, inference_time: float) -> Dict:
     """创建检测日志"""
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    print(f'--------->{inference_time}')
     log_entry = {
         "timestamp": timestamp,
         "file_name": file_name,
-        "inference_time_ms": round(inference_time * 1000, 2),
+        "inference_time_ms": f'{inference_time:.2f}',
         "detection_results": detection_results
     }
     
