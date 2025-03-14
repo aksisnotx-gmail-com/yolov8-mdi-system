@@ -66,14 +66,27 @@ streamlit run app.py
 ## 目录结构
 
 ```
-yolov8-mdi-system/
-├── server/                # 主代码目录
-│   ├── app.py             # 应用入口
-│   ├── ui.py              # 前端界面
-│   ├── inference.py       # 推理逻辑
-│   └── utils.py           # 工具函数
-├── requirements.txt       # 依赖列表
-└── README.md              # 说明文档
+├── datasets  数据集
+│   ├── global.solution.v4i.yolov8
+│   ├── normal
+│   └── small
+├── deploy-linux.sh  Linux 部署脚本
+├── example  测试样例
+│   ├── 1.png
+│   ├── 2.png
+│   ├── 3.png
+│   └── test-video.mp4
+├── requirements.txt 
+├── server
+│   ├── app.py 启动文件
+│   ├── cfg.py
+│   ├── inference.py
+│   ├── ui.py
+│   └── utils.py
+├── test-opencv.py 测试 opencv
+├── val.py  验证模型
+├── train.py 训练模型
+└── yolov8n.pt yolov8n模型
 ```
 
 ## 注意事项
