@@ -53,5 +53,8 @@ def conversion_box(org_label_path:str):
 
 if __name__ == '__main__':
     model = YOLO("server/models/yolov8n.pt")
-    # 训练（epochs=50 代表训练 50 轮）
+    # mac 训练（epochs=50 代表训练 50 轮）
     model.train(data="./datasets/global.solution.v4i.yolov8/data.yaml", epochs=50,cache=False, imgsz=640,workers=0, batch=4, device="mps",fraction=0.5)
+    # windows训练参数
+    # model.train(data="D:\Program Files (x86)\idea\IDEAproject\python\jiedan\yolov8-mdi-system\datasets\global.solution.v4i.yolov8\data.yaml", epochs=50,cache=False,device='cpu', imgsz=640,workers=1, batch=3)
+

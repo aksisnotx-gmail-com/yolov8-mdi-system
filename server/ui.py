@@ -118,6 +118,15 @@ def load_model():
             st.session_state.model_loaded = False
 
 def display_header():
+    # 去除头部按钮
+    hide_menu_style = """
+        <style>
+        #MainMenu {visibility: hidden;}
+        header {visibility: hidden;}
+        </style>
+    """
+    st.markdown(hide_menu_style, unsafe_allow_html=True)
+
     """显示页面标题和介绍"""
     st.markdown('<h1 class="main-header">🌊 海洋垃圾检测系统</h1>', unsafe_allow_html=True)
     st.markdown('<p class="info-text">基于YOLOv8的海洋垃圾检测与分析系统，支持图像、视频和实时摄像头检测。</p>', unsafe_allow_html=True)
@@ -125,8 +134,8 @@ def display_header():
 def display_sidebar():
     """显示侧边栏"""
     with st.sidebar:
-        st.image("https://raw.githubusercontent.com/ultralytics/assets/main/yolov8/banner-yolov8.png", use_column_width=True)
-        st.markdown("## ")
+        # st.image("https://raw.githubusercontent.com/ultralytics/assets/main/yolov8/banner-yolov8.png", use_column_width=True)
+        # st.markdown("## ")
         
         # 导航选项
         tabs = {

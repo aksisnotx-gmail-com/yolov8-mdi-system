@@ -6,29 +6,15 @@ import os
 from typing import Dict
 
 import pandas as pd
-import plotly.express as px
 import plotly.graph_objects as go
 
 from cfg import UPLOADS_FOLDER_PATH, RESULTS_FOLDER_PATH, LOGS_FOLDER_PATH, DATASETS_FOLDER_PATH, \
     MODELS_FOLDER_PATH
 
-
-# # 设置日志
-# logging.basicConfig(
-#     level=logging.INFO,
-#     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-#     handlers=[
-#         logging.FileHandler(SYS_LOG_PATH),
-#         logging.StreamHandler()
-#     ]
-# )
-# logger = logging.getLogger("MDI-System")
-
 logger = logging.getLogger("MDI-System")
 
 def setup_directories():
     """创建必要的目录结构"""
-    # dirs = ["uploads", "results", "logs", "datasets", "models"]
     dirs = [UPLOADS_FOLDER_PATH, RESULTS_FOLDER_PATH, LOGS_FOLDER_PATH, DATASETS_FOLDER_PATH, MODELS_FOLDER_PATH]
     for dir_name in dirs:
         if not os.path.exists(dir_name):
