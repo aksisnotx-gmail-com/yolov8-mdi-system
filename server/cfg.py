@@ -1,7 +1,7 @@
 import logging
 import os.path
 """
-路径使用相对路径，相对路径具体是指 streamlit run 的路径
+路径使用相对路径，相对路径相对 streamlit run 执行的路径
 """
 SYS_LOG_PATH = "sys-logs/sys.log"
 LOGS_FOLDER_PATH = 'logs'

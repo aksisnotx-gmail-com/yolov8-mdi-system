@@ -3,6 +3,7 @@ import datetime
 import json
 import logging
 import os
+import shutil
 from typing import Dict
 
 import pandas as pd
@@ -60,7 +61,6 @@ def is_image_file(file_path: str) -> bool:
 def create_detection_log(file_name: str, detection_results: Dict, inference_time: float) -> Dict:
     """创建检测日志"""
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    print(f'--------->{inference_time}')
     log_entry = {
         "timestamp": timestamp,
         "file_name": file_name,
@@ -168,6 +168,55 @@ def create_pie_chart(df: pd.DataFrame, names_col: str, values_col: str, title: s
         uniformtext_mode="hide"
     )
     return fig
+
+def clear_folder(dirPath):
+    """
+    清空目录
+    """
+    if os.path.exists(dirPath) and os.listdir(dirPath):
+        # 文件夹存在且不为空，删除其下所有文件和子目录
+        for filename in os.listdir(dirPath):
+            file_path = os.path.join(dirPath, filename)
+            try:
+                if os.path.isfile(file_path) or os.path.islink(file_path):
+                    os.unlink(file_path)  # 删除文件或符号链接
+                elif os.path.isdir(file_path):
+                    shutil.rmtree(file_path)  # 删除子文件夹
+            except Exception as e:
+                logger.error(f"删除 {file_path} 失败: {e}")
+    logger.info(f'{dirPath} 已清空')
+
+def find_first_file_with_suffix(dir_path,suffix: tuple):
+    """
+    寻找目录下的指定文件类型，并返回其绝对路径（只返回第一个找到的）
+    """
+    abspath = get_abspath(dir_path)
+    if abspath is None:
+        return None
+
+    for root, _, files in os.walk(abspath):
+        for file in files:
+            if file.endswith(suffix):
+                return os.path.join(root, file)
+    return None  # 未找到时返回 None
+
+def get_abspath(dir_path):
+    """
+    返回相对目录/文件的绝对路径。如果路径不存在，返回 None。
+
+    参数:
+        dir_path (str): 输入的目录路径（可以是相对路径或绝对路径）
+
+    返回:
+        str or None: 绝对路径（如果存在），否则返回 None
+    """
+    # 将 dir_path 转为绝对路径
+    abs_path = os.path.abspath(dir_path)
+    # 检查路径是否存在
+    if os.path.exists(abs_path):
+        return abs_path  # 存在时返回绝对路径
+    else:
+        return None  # 不存在时返回 None
 
 
 def get_file_download_link(file_path: str, link_text: str) -> str:

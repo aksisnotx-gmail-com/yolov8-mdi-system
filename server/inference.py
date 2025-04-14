@@ -5,10 +5,11 @@ from typing import Dict, Tuple
 
 import cv2
 import numpy as np
-from ultralytics import YOLO
 import streamlit as st
+from ultralytics import YOLO
 
 from cfg import DEFAULT_MODEL_FILE_PATH, MODELS_FOLDER_PATH, RESULTS_FOLDER_PATH
+from utils import clear_folder
 
 logger = logging.getLogger("MDI-System")
 
@@ -34,7 +35,7 @@ class MarineDebrisDetector:
             # 如果模型文件不存在，则下载预训练模型
             if not os.path.exists(self.model_path):
                 logger.info(f"模型文件 {self.model_path} 不存在，将使用预训练模型")
-                self.model = YOLO("yolov8n.pt")
+                self.model = YOLO(DEFAULT_MODEL_FILE_PATH)
                 # 保存模型到指定路径
                 self.model.save(self.model_path)
             else:
@@ -378,20 +379,27 @@ class MarineDebrisDetector:
         
         return class_counts
     
-    def train_model(self, dataset_path: str, epochs: int = 50, batch_size: int = 16, 
-                   img_size: int = 640, output_dir: str = MODELS_FOLDER_PATH) -> Dict:
+    def train_model(self, dataset_path: str, epochs: int = 50,cache: bool = True, batch_size: int = 16,
+                img_size: int = 640, workers: int = 4,device: str="mps", fraction: float=1.0, output_dir: str = MODELS_FOLDER_PATH) -> dict:
+
+        # 清空目录下的文件
+        clear_folder(output_dir)
+
         """
-        使用自定义数据集训练模型
-        
+         使用自定义数据集训练模型
+
         Args:
-            dataset_path: 数据集路径（YOLO格式）
-            epochs: 训练轮数
-            batch_size: 批次大小
-            img_size: 图像大小
-            output_dir: 输出目录
-            
-        Returns:
-            训练结果指标
+
+        :param dataset_path: 数据集路径（YOLO格式）
+        :param epochs: 训练轮数
+        :param cache: 是否缓存
+        :param batch_size: 批次大小
+        :param img_size: 图像大小
+        :param workers: 线程数
+        :param device: 训练设备
+        :param fraction: 训练数据比例
+        :param output_dir: 输出目录
+        :return: 训练结果指标
         """
         if not os.path.exists(dataset_path):
             raise FileNotFoundError(f"数据集路径 {dataset_path} 不存在")
@@ -404,67 +412,32 @@ class MarineDebrisDetector:
         try:
             # 创建一个新的YOLO模型实例用于训练
             model = YOLO(DEFAULT_MODEL_FILE_PATH)
-            
+
             # 训练模型
             results = model.train(
                 data=dataset_path,
                 epochs=epochs,
-                batch=batch_size,
+                cache=cache,
                 imgsz=img_size,
+                workers=workers,
+                batch=batch_size,
+                device=device,
+                fraction=fraction,
                 project=output_dir,
                 name="marine_debris_detector"
             )
-            
+
             # 获取训练结果
             metrics = {
                 "mAP50": float(results.results_dict.get("metrics/mAP50(B)", 0)),
                 "mAP50-95": float(results.results_dict.get("metrics/mAP50-95(B)", 0)),
                 "precision": float(results.results_dict.get("metrics/precision(B)", 0)),
                 "recall": float(results.results_dict.get("metrics/recall(B)", 0)),
-                "val_loss": float(results.results_dict.get("val/box_loss", 0))
             }
-            
-            # 更新当前模型
-            self.model_path = os.path.join(output_dir, "runs", "weights", "best.pt")
-            self.load_model()
-            
-            logger.info(f"模型训练完成，最佳模型保存至: {self.model_path}")
-            
+
+
+            # 提供下载模型的连接
             return metrics
         except Exception as e:
             logger.error(f"模型训练失败: {str(e)}")
             raise
-    
-    def evaluate_model(self, dataset_path: str) -> Dict:
-        """
-        评估模型性能
-        
-        Args:
-            dataset_path: 数据集路径（YOLO格式）
-            
-        Returns:
-            评估指标
-        """
-        if not os.path.exists(dataset_path):
-            raise FileNotFoundError(f"数据集路径 {dataset_path} 不存在")
-        
-        logger.info(f"开始评估模型，数据集: {dataset_path}")
-        
-        try:
-            # 评估模型
-            results = self.model.val(data=dataset_path)
-            
-            # 获取评估指标
-            metrics = {
-                "mAP50": float(results.results_dict.get("metrics/mAP50(B)", 0)),
-                "mAP50-95": float(results.results_dict.get("metrics/mAP50-95(B)", 0)),
-                "precision": float(results.results_dict.get("metrics/precision(B)", 0)),
-                "recall": float(results.results_dict.get("metrics/recall(B)", 0))
-            }
-            
-            logger.info(f"模型评估完成，mAP50: {metrics['mAP50']:.4f}, mAP50-95: {metrics['mAP50-95']:.4f}")
-            
-            return metrics
-        except Exception as e:
-            logger.error(f"模型评估失败: {str(e)}")
-            raise 

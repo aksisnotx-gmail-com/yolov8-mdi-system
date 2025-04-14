@@ -1,6 +1,7 @@
 import json
 import os
-from datetime import datetime, timedelta
+import zipfile
+from datetime import datetime
 
 import cv2
 import pandas as pd
@@ -9,8 +10,11 @@ import plotly.graph_objects as go
 import streamlit as st
 
 import utils
+from cfg import DATASETS_FOLDER_PATH, MODELS_FOLDER_PATH
 # 导入自定义模块
 from inference import MarineDebrisDetector
+from utils import clear_folder
+from utils import find_first_file_with_suffix
 
 # 设置页面配置
 st.set_page_config(
@@ -477,97 +481,94 @@ def dataset_management_tab():
     
     with col1:
         st.markdown("### 上传数据集")
-        st.markdown('<div class="info-text">请上传YOLO格式的数据集配置文件(yaml):</div>', unsafe_allow_html=True)
-        
-        uploaded_dataset = st.file_uploader("选择数据集配置文件", type=["yaml", "yml"])
-        
-        if uploaded_dataset is not None:
+        st.markdown('<div class="info-text">请上传YOLO格式的数据集:</div>', unsafe_allow_html=True)
+        st.markdown('<div style="color: gray;font-size: small;margin-bottom: 20px">Tip: 在配置训练数据的位置理应是相对位置</div>', unsafe_allow_html=True)
+
+        uploaded_dataset_zip = st.file_uploader("上传包含配置文件的数据集文件夹（.zip）", type=["zip"])
+
+        if uploaded_dataset_zip is not None:
+            #查看DATASETS_FOLDER_PATH是否为空文件夹不为空删除下面所有文件
+            clear_folder(DATASETS_FOLDER_PATH)
+
+            # 解压上传的 zip
+            with zipfile.ZipFile(uploaded_dataset_zip, 'r') as zip_ref:
+                zip_ref.extractall(DATASETS_FOLDER_PATH)
+
+            st.success(f"已成功解压到 {DATASETS_FOLDER_PATH}")
+
+
             # 显示文件信息
-            file_details = utils.get_file_info(uploaded_dataset)
+            file_details = utils.get_file_info(uploaded_dataset_zip)
             st.markdown('<div class="highlight">', unsafe_allow_html=True)
             st.markdown("#### 数据集信息")
             for key, value in file_details.items():
                 st.write(f"**{key}:** {value}")
             st.markdown('</div>', unsafe_allow_html=True)
-            
-            # 保存上传的文件
-            dataset_path = utils.save_uploaded_file(uploaded_dataset, "datasets")
-            
+
             st.markdown("### 训练参数")
             epochs = st.slider("训练轮数", min_value=1, max_value=100, value=10, step=1)
             batch_size = st.slider("批次大小", min_value=1, max_value=64, value=16, step=1)
             img_size = st.slider("图像大小", min_value=320, max_value=1280, value=640, step=32)
-            
+            cache = st.checkbox("是否启用缓存", value=False)
+            workers = st.number_input("数据加载线程数", min_value=0, max_value=16, value=0, step=1)
+            fraction = st.slider("训练数据使用比例", min_value=0.1, max_value=1.0, value=0.5, step=0.1)
+            device = st.selectbox("设备类型", options=["mps", "cpu"], index=0)
+
             # 训练按钮
             if st.button("开始训练", key="train_btn"):
                 with st.spinner("正在训练模型，这可能需要一些时间..."):
                     try:
+                        # 寻找训练文件配置文件
+                        dataset_yml_path = find_first_file_with_suffix(DATASETS_FOLDER_PATH,('yml','yaml'))
+
+                        if dataset_yml_path is None:
+                            st.error("未找到数据集配置文件")
+                            return
+
                         # 调用训练函数
                         metrics = st.session_state.detector.train_model(
-                            dataset_path, epochs, batch_size, img_size
+                            dataset_yml_path, epochs,cache, batch_size, img_size,workers,device,fraction
                         )
-                        
+
                         # 保存指标到会话状态
                         st.session_state.dataset_metrics = metrics
-                        
+
                         st.success("模型训练完成！")
                     except Exception as e:
                         st.error(f"模型训练过程中出错: {str(e)}")
-        
-        st.markdown("### 模型评估")
-        st.markdown('<div class="info-text">请上传YOLO格式的数据集配置文件(yaml)进行评估:</div>', unsafe_allow_html=True)
-        
-        eval_dataset = st.file_uploader("选择评估数据集配置文件", type=["yaml", "yml"], key="eval_dataset")
-        
-        if eval_dataset is not None:
-            # 保存上传的文件
-            eval_dataset_path = utils.save_uploaded_file(eval_dataset, "datasets")
-            
-            # 评估按钮
-            if st.button("开始评估", key="eval_btn"):
-                with st.spinner("正在评估模型，请稍候..."):
-                    try:
-                        # 调用评估函数
-                        metrics = st.session_state.detector.evaluate_model(eval_dataset_path)
-                        
-                        # 保存指标到会话状态
-                        st.session_state.dataset_metrics = metrics
-                        
-                        st.success("模型评估完成！")
-                    except Exception as e:
-                        st.error(f"模型评估过程中出错: {str(e)}")
     
     with col2:
         # 显示模型指标
         if st.session_state.dataset_metrics is not None:
             st.markdown('<h3 class="sub-header">模型评估指标</h3>', unsafe_allow_html=True)
-            
+
             # 创建指标数据框
             metrics_data = []
             for metric, value in st.session_state.dataset_metrics.items():
                 metrics_data.append({
                     "指标": metric,
-                    "值": value
+                    "值": str(value)
                 })
-            
+
             metrics_df = pd.DataFrame(metrics_data)
-            
+
             # 显示指标表格
             st.dataframe(metrics_df, use_container_width=True)
-            
+
             # 创建雷达图
             categories = metrics_df["指标"].tolist()
             values = metrics_df["值"].tolist()
-            
+
             fig = go.Figure()
-            
+
             fig.add_trace(go.Scatterpolar(
                 r=values,
                 theta=categories,
                 fill='toself',
-                name='模型性能'
+                name='模型性能',
+                hovertemplate="%{theta}: %{r}"
             ))
-            
+
             fig.update_layout(
                 polar=dict(
                     radialaxis=dict(
@@ -576,19 +577,24 @@ def dataset_management_tab():
                     )
                 ),
                 title="模型性能雷达图",
-                showlegend=False
+                showlegend=False,
             )
-            
+
             st.plotly_chart(fig, use_container_width=True)
-            
+
             # 创建条形图
             fig2 = px.bar(metrics_df, x="指标", y="值", title="模型性能指标")
             st.plotly_chart(fig2, use_container_width=True)
-            
+
             # 导出选项
             if st.button("导出指标为CSV"):
                 csv_path = utils.export_to_csv(metrics_df, "model_metrics.csv")
                 st.markdown(utils.get_file_download_link(csv_path, "下载CSV文件"), unsafe_allow_html=True)
+            if st.button("下载模型文件"):
+                path = find_first_file_with_suffix(MODELS_FOLDER_PATH,('best.pt',))
+                print(f'--------------->{path}')
+                st.markdown(utils.get_file_download_link(path, "下载模型文件"), unsafe_allow_html=True)
+
         else:
             st.info("请先训练或评估模型以查看指标")
 
