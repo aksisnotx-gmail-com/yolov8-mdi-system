@@ -591,9 +591,7 @@ def dataset_management_tab():
                 csv_path = utils.export_to_csv(metrics_df, "model_metrics.csv")
                 st.markdown(utils.get_file_download_link(csv_path, "下载CSV文件"), unsafe_allow_html=True)
             if st.button("下载模型文件"):
-                path = find_first_file_with_suffix(MODELS_FOLDER_PATH,('best.pt',))
-                print(f'--------------->{path}')
-                st.markdown(utils.get_file_download_link(path, "下载模型文件"), unsafe_allow_html=True)
+                st.markdown(utils.get_file_download_link(find_first_file_with_suffix(MODELS_FOLDER_PATH,('best.pt',)), "下载模型文件"), unsafe_allow_html=True)
 
         else:
             st.info("请先训练或评估模型以查看指标")

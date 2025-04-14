@@ -188,7 +188,7 @@ def clear_folder(dirPath):
 
 def find_first_file_with_suffix(dir_path,suffix: tuple):
     """
-    寻找目录下的指定文件类型，并返回其绝对路径（只返回第一个找到的）
+    寻找目录下的指定文件类型，也可以是文件名称和后缀，并返回其绝对路径（只返回第一个找到的）
     """
     abspath = get_abspath(dir_path)
     if abspath is None:
