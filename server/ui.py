@@ -10,11 +10,12 @@ import plotly.graph_objects as go
 import streamlit as st
 
 import utils
-from cfg import DATASETS_FOLDER_PATH, MODELS_FOLDER_PATH
+from cfg import DATASETS_FOLDER_PATH, MODELS_FOLDER_PATH, logger
 # 导入自定义模块
 from inference import MarineDebrisDetector
 from utils import clear_folder
 from utils import find_first_file_with_suffix
+from utils import safe_path
 
 # 设置页面配置
 st.set_page_config(
@@ -490,9 +491,18 @@ def dataset_management_tab():
             #查看DATASETS_FOLDER_PATH是否为空文件夹不为空删除下面所有文件
             clear_folder(DATASETS_FOLDER_PATH)
 
-            # 解压上传的 zip
-            with zipfile.ZipFile(uploaded_dataset_zip, 'r') as zip_ref:
-                zip_ref.extractall(DATASETS_FOLDER_PATH)
+            try:
+                #获取完整的目录
+                extract_to_safe = safe_path(DATASETS_FOLDER_PATH)
+                logger.info(f'真实解压目录------->{extract_to_safe}')
+
+                # 解压上传的 zip
+                with zipfile.ZipFile(uploaded_dataset_zip, 'r') as zip_ref:
+                    zip_ref.extractall(extract_to_safe)
+            except Exception as e:
+                logger.error("解压异常-------->", e)
+                st.error('压缩包异常')
+                return
 
             st.success(f"已成功解压到 {DATASETS_FOLDER_PATH}")
 

@@ -234,4 +234,14 @@ def get_file_download_link(file_path: str, link_text: str) -> str:
         mime_type = 'application/octet-stream'
     
     href = f'<a href="data:{mime_type};base64,{b64}" download="{os.path.basename(file_path)}">{link_text}</a>'
-    return href 
+    return href
+
+
+def safe_path(path):
+    """对 Windows 添加 \\?\ 前缀，其他平台不处理"""
+    if os.name == 'nt':
+        abs_path = os.path.abspath(path)
+        if not abs_path.startswith(r'\\?\\'):
+            return r'\\?\\' + abs_path
+        return abs_path
+    return path
