@@ -520,9 +520,11 @@ def dataset_management_tab():
             batch_size = st.slider("批次大小", min_value=1, max_value=64, value=16, step=1)
             img_size = st.slider("图像大小", min_value=320, max_value=1280, value=640, step=32)
             cache = st.checkbox("是否启用缓存", value=False)
-            workers = st.number_input("数据加载线程数", min_value=0, max_value=16, value=0, step=1)
+            # workers = st.number_input("数据加载线程数", min_value=0, max_value=16, value=0, step=1)
+            workers = 4
             fraction = st.slider("训练数据使用比例", min_value=0.1, max_value=1.0, value=0.5, step=0.1)
-            device = st.selectbox("设备类型", options=["mps", "cpu"], index=0)
+            # device = st.selectbox("设备类型", options=["mps", "cpu"], index=0)
+            device = "cpu"
 
             # 训练按钮
             if st.button("开始训练", key="train_btn"):
